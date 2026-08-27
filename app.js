@@ -1,4 +1,4 @@
-const KEY="dontstop_v2";
+const KEY="dontstop_v3";
 
 const SUBJECTS=[
 "Quantitative Aptitude",
@@ -9,7 +9,6 @@ const SUBJECTS=[
 ];
 
 const TOPICS=[
-/* QUANTITATIVE APTITUDE */
 ["Quantitative Aptitude","Number System","Level 1"],
 ["Quantitative Aptitude","Simplification","Level 1"],
 ["Quantitative Aptitude","Approximation","Level 1"],
@@ -39,7 +38,6 @@ const TOPICS=[
 ["Quantitative Aptitude","Advanced DI","Level 4"],
 ["Quantitative Aptitude","Mains Level Arithmetic","Level 4"],
 
-/* REASONING */
 ["Reasoning Ability","Inequality","Level 1"],
 ["Reasoning Ability","Syllogism","Level 1"],
 ["Reasoning Ability","Coding Decoding","Level 1"],
@@ -66,7 +64,6 @@ const TOPICS=[
 ["Reasoning Ability","High Level Puzzles","Level 4"],
 ["Reasoning Ability","Mains Reasoning Mixed Sets","Level 4"],
 
-/* ENGLISH */
 ["English Language","Noun","Level 1"],
 ["English Language","Pronoun","Level 1"],
 ["English Language","Adjective","Level 1"],
@@ -93,7 +90,6 @@ const TOPICS=[
 ["English Language","Advanced RC","Level 4"],
 ["English Language","Mains English Mixed Sets","Level 4"],
 
-/* GENERAL AWARENESS */
 ["General Awareness","Current Affairs - National","Level 1"],
 ["General Awareness","Current Affairs - International","Level 1"],
 ["General Awareness","Current Affairs - Banking","Level 1"],
@@ -113,7 +109,6 @@ const TOPICS=[
 ["General Awareness","National Parks","Level 3"],
 ["General Awareness","Mains Current Affairs Revision","Level 4"],
 
-/* BANKING */
 ["Banking & Financial Awareness","RBI","Level 1"],
 ["Banking & Financial Awareness","Types of Banks","Level 1"],
 ["Banking & Financial Awareness","Banking Terms","Level 1"],
@@ -135,37 +130,6 @@ const TOPICS=[
 ["Banking & Financial Awareness","Mains Banking Awareness","Level 4"]
 ];
 
-let data=JSON.parse(localStorage.getItem(KEY)||"null");
-
-if(!data){
-data={
-topics:TOPICS.map((x,i)=>({
-id:i+1,
-subject:x[0],
-topic:x[1],
-level:x[2],
-status:"Not Started",
-practice:0,
-correct:0,
-wrong:0,
-time:0,
-notes:"",
-revisions:[]
-})),
-mistakes:[],
-tests:[],
-practice:[],
-activity:{}
-});
-saveData();
-}else{
-data.topics=data.topics||[];
-data.mistakes=data.mistakes||[];
-data.tests=data.tests||[];
-data.practice=data.practice||[];
-data.activity=data.activity||{};
-}
-
 const $=id=>document.getElementById(id);
 
 function today(){
@@ -180,6 +144,45 @@ return String(s).replace(/[&<>"']/g,c=>({
 '"':"&quot;",
 "'":"&#39;"
 }[c]));
+}
+
+function newTopic(x,i){
+return{
+id:i+1,
+subject:x[0],
+topic:x[1],
+level:x[2],
+status:"Not Started",
+practice:0,
+correct:0,
+wrong:0,
+time:0,
+notes:"",
+revisions:[]
+};
+}
+
+let data=JSON.parse(localStorage.getItem(KEY)||"null");
+
+if(!data){
+data={
+topics:TOPICS.map(newTopic),
+mistakes:[],
+tests:[],
+practice:[],
+activity:{}
+};
+localStorage.setItem(KEY,JSON.stringify(data));
+}else{
+data.topics=data.topics||[];
+data.mistakes=data.mistakes||[];
+data.tests=data.tests||[];
+data.practice=data.practice||[];
+data.activity=data.activity||{};
+
+if(data.topics.length===0){
+data.topics=TOPICS.map(newTopic);
+}
 }
 
 function saveData(){
@@ -200,22 +203,23 @@ return 0;
 }
 
 function statusClass(s){
-return s.toLowerCase().replace(/\s+/g,"");
+return String(s||"").toLowerCase().replace(/\s+/g,"");
 }
 
 function renderTopics(){
 
-let sf=$("topicSubjectFilter")?.value||"All";
-let lf=$("topicLevelFilter")?.value||"All";
-let stf=$("topicStatusFilter")?.value||"All";
+const sf=$("topicSubjectFilter")?.value||"All";
+const lf=$("topicLevelFilter")?.value||"All";
+const stf=$("topicStatusFilter")?.value||"All";
 
-let list=data.topics.filter(t=>
+const list=data.topics.filter(t=>
 (sf==="All"||t.subject===sf)&&
 (lf==="All"||t.level===lf)&&
 (stf==="All"||t.status===stf)
 );
 
-$("topicList").innerHTML=list.map(t=>`
+$("topicList").innerHTML=list.length?
+list.map(t=>`
 <div class="entry">
 <div class="entryTitle">${esc(t.topic)}</div>
 <div class="meta">${esc(t.subject)} • ${esc(t.level)}</div>
@@ -229,10 +233,11 @@ $("topicList").innerHTML=list.map(t=>`
 <div class="meta">
 Progress ${topicProgress(t)}% •
 Practice ${t.practice||0} •
-Accuracy ${t.practice?Math.round((t.correct/t.practice)*100):0}%
+Accuracy ${t.practice?Math.round(t.correct/t.practice*100):0}%
 </div>
 
-${t.notes?`<div class="meta">Improve: ${esc(t.notes)}</div>`:""}
+${t.notes?
+`<div class="meta">Improve: ${esc(t.notes)}</div>`:""}
 
 <div class="topicActions">
 <button onclick="editTopic(${t.id})">✏️ Edit</button>
@@ -240,19 +245,25 @@ ${t.notes?`<div class="meta">Improve: ${esc(t.notes)}</div>`:""}
 <button onclick="reviseTopic(${t.id})">🔄 Revision</button>
 </div>
 </div>
-`).join("")||`<div class="card empty">No topics match these filters.</div>`;
+`).join(""):
+`<div class="card empty">No topics match these filters.</div>`;
 
-let completed=data.topics.filter(t=>t.status==="Completed"||t.status==="Exam Ready").length;
-let pct=data.topics.length?Math.round(completed/data.topics.length*100):0;
+const completed=data.topics.filter(t=>
+t.status==="Completed"||t.status==="Exam Ready"
+).length;
+
+const pct=data.topics.length?
+Math.round(completed/data.topics.length*100):0;
 
 $("topicProgressBar").style.width=pct+"%";
-$("topicProgressText").textContent=`${pct}% completed • ${completed}/${data.topics.length} topics`;
+$("topicProgressText").textContent=
+`${pct}% completed • ${completed}/${data.topics.length} topics`;
 
 }
 
 function editTopic(id){
 
-let t=data.topics.find(x=>x.id===id);
+const t=data.topics.find(x=>x.id===id);
 if(!t)return;
 
 $("modal").hidden=false;
@@ -301,16 +312,20 @@ $("entryForm").innerHTML=`
 $("entryForm").onsubmit=e=>{
 e.preventDefault();
 
-let f=new FormData(e.target);
+const f=new FormData(e.target);
+const oldStatus=t.status;
 
 t.level=f.get("level");
-let oldStatus=t.status;
 t.status=f.get("status");
 t.notes=f.get("notes");
 
-if(t.status==="Completed"&&oldStatus!=="Completed"&&oldStatus!=="Exam Ready"){
+if(t.status==="Completed"&&
+oldStatus!=="Completed"&&
+oldStatus!=="Exam Ready"){
 scheduleTopicRevisions(t);
 }
+
+data.activity[today()]=true;
 
 save();
 closeForm();
@@ -320,12 +335,13 @@ closeForm();
 
 function scheduleTopicRevisions(t){
 
-let base=new Date();
+const base=new Date();
 
 t.revisions=[1,3,7,15,30].map(n=>{
-let d=new Date(base);
+const d=new Date(base);
 d.setDate(d.getDate()+n);
-return {
+
+return{
 date:d.toISOString().slice(0,10),
 done:false
 };
@@ -335,13 +351,16 @@ done:false
 
 function reviseTopic(id){
 
-let t=data.topics.find(x=>x.id===id);
+const t=data.topics.find(x=>x.id===id);
 if(!t)return;
 
-let due=t.revisions?.find(r=>r.date<=today()&&!r.done);
+const due=(t.revisions||[]).find(r=>
+r.date<=today()&&!r.done
+);
 
 if(due){
 due.done=true;
+data.activity[today()]=true;
 save();
 alert("Revision completed! 🎯");
 }else{
@@ -350,9 +369,24 @@ alert("No revision is due for this topic today.");
 
 }
 
+function completeRevision(id,date){
+
+const t=data.topics.find(x=>x.id===id);
+if(!t)return;
+
+const r=(t.revisions||[]).find(x=>x.date===date);
+
+if(r){
+r.done=true;
+data.activity[today()]=true;
+save();
+}
+
+}
+
 function practiceTopic(id){
 
-let t=data.topics.find(x=>x.id===id);
+const t=data.topics.find(x=>x.id===id);
 if(!t)return;
 
 $("modal").hidden=false;
@@ -385,23 +419,25 @@ $("entryForm").innerHTML=`
 $("entryForm").onsubmit=e=>{
 e.preventDefault();
 
-let f=Object.fromEntries(new FormData(e.target).entries());
+const f=Object.fromEntries(new FormData(e.target).entries());
 
-let attempted=+f.attempted;
-let correct=+f.correct;
+const attempted=Number(f.attempted);
+const correct=Math.min(Number(f.correct),attempted);
+const wrong=Math.max(0,attempted-correct);
+const time=Number(f.time||0);
 
 t.practice+=attempted;
 t.correct+=correct;
-t.wrong+=Math.max(0,attempted-correct);
-t.time+=+(f.time||0);
+t.wrong+=wrong;
+t.time+=time;
 
 if(t.status==="Not Started"||t.status==="Learning"){
 t.status="Practicing";
 }
 
-if(f.notes)t.notes=f.notes;
-
-data.activity[today()]=true;
+if(f.notes){
+t.notes=f.notes;
+}
 
 data.practice.push({
 date:today(),
@@ -409,9 +445,11 @@ subject:t.subject,
 topic:t.topic,
 attempted,
 correct,
-wrong:Math.max(0,attempted-correct),
-time:+(f.time||0)
+wrong,
+time
 });
+
+data.activity[today()]=true;
 
 save();
 closeForm();
@@ -421,22 +459,35 @@ closeForm();
 
 function renderPractice(){
 
-let attempted=data.practice.reduce((a,x)=>a+(+x.attempted||0),0);
-let correct=data.practice.reduce((a,x)=>a+(+x.correct||0),0);
+const attempted=data.practice.reduce(
+(a,x)=>a+Number(x.attempted||0),0
+);
+
+const correct=data.practice.reduce(
+(a,x)=>a+Number(x.correct||0),0
+);
 
 $("practiceQuestions").textContent=attempted;
+
 $("practiceAccuracy").textContent=attempted?
 Math.round(correct/attempted*100)+"%":"0%";
 
 $("practiceList").innerHTML=data.practice.length?
 data.practice.slice().reverse().map(x=>`
 <div class="entry">
-<div class="entryTitle">${esc(x.subject)} • ${esc(x.topic)}</div>
+<div class="entryTitle">
+${esc(x.subject)} • ${esc(x.topic)}
+</div>
+
 <div class="meta">${esc(x.date)}</div>
+
 <span class="pill">Attempted ${x.attempted}</span>
 <span class="pill">Correct ${x.correct}</span>
 <span class="pill">Wrong ${x.wrong}</span>
-<span class="pill">Accuracy ${x.attempted?Math.round(x.correct/x.attempted*100):0}%</span>
+<span class="pill">
+Accuracy ${x.attempted?
+Math.round(x.correct/x.attempted*100):0}%
+</span>
 </div>
 `).join(""):
 `<div class="card empty">No practice recorded yet.</div>`;
@@ -445,7 +496,7 @@ data.practice.slice().reverse().map(x=>`
 
 function renderRevision(){
 
-let due=[];
+const due=[];
 
 data.topics.forEach(t=>{
 (t.revisions||[]).forEach(r=>{
@@ -459,36 +510,33 @@ $("revisionToday").innerHTML=due.length?
 due.map(x=>`
 <div class="entry">
 <div class="entryTitle">${esc(x.topic.topic)}</div>
-<div class="meta">${esc(x.topic.subject)} • Revision due ${esc(x.revision.date)}</div>
-<button class="primary" onclick="completeRevision(${x.topic.id},'${x.revision.date}')">Mark Done</button>
+<div class="meta">
+${esc(x.topic.subject)} • Revision due ${esc(x.revision.date)}
+</div>
+
+<button class="primary"
+onclick="completeRevision(${x.topic.id},'${x.revision.date}')">
+Mark Done
+</button>
 </div>
 `).join(""):
 `No revisions due today 🎯`;
 
-$("revisionList").innerHTML=data.topics.filter(t=>t.revisions?.length).map(t=>`
+$("revisionList").innerHTML=data.topics.filter(
+t=>t.revisions?.length
+).map(t=>`
 <div class="entry">
 <div class="entryTitle">${esc(t.topic)}</div>
 <div class="meta">${esc(t.subject)}</div>
+
 ${t.revisions.map(r=>`
 <span class="pill">
 ${r.done?"✓":"○"} ${r.date}
 </span>
 `).join("")}
+
 </div>
 `).join("");
-
-}
-
-function completeRevision(id,date){
-
-let t=data.topics.find(x=>x.id===id);
-let r=t?.revisions?.find(x=>x.date===date);
-
-if(r){
-r.done=true;
-data.activity[today()]=true;
-save();
-}
 
 }
 
@@ -503,67 +551,207 @@ if(kind==="mistake"){
 $("formTitle").textContent="Add Mistake";
 
 f=`
-<div class="field"><label>Date</label><input name="date" type="date" value="${today()}" required></div>
-<div class="field"><label>Subject</label><input name="subject" required></div>
-<div class="field"><label>Topic</label><input name="topic" required></div>
-<div class="field"><label>Question number</label><input name="qno" type="number"></div>
-<div class="field"><label>What was the mistake?</label><textarea name="mistake" required></textarea></div>
-<div class="field"><label>Correct method</label><textarea name="correctMethod"></textarea></div>
-<div class="field"><label>Reason</label><input name="reason"></div>
-<div class="field"><label>What should I improve?</label><textarea name="revisit"></textarea></div>
+<div class="field">
+<label>Date</label>
+<input name="date" type="date" value="${today()}" required>
+</div>
+
+<div class="field">
+<label>Subject</label>
+<input name="subject" required>
+</div>
+
+<div class="field">
+<label>Topic</label>
+<input name="topic" required>
+</div>
+
+<div class="field">
+<label>Question number</label>
+<input name="qno" type="number">
+</div>
+
+<div class="field">
+<label>What was the mistake?</label>
+<textarea name="mistake" required></textarea>
+</div>
+
+<div class="field">
+<label>Correct method</label>
+<textarea name="correctMethod"></textarea>
+</div>
+
+<div class="field">
+<label>Reason</label>
+<input name="reason">
+</div>
+
+<div class="field">
+<label>What should I improve?</label>
+<textarea name="revisit"></textarea>
+</div>
 `;
 
-}
-
-else if(kind==="test"){
+}else if(kind==="test"){
 
 $("formTitle").textContent="Add Test";
 
 f=`
-<div class="field"><label>Date</label><input name="date" type="date" value="${today()}" required></div>
-<div class="field"><label>Test name</label><input name="test" required></div>
-<div class="field"><label>Subject</label><input name="subject" required></div>
-<div class="field"><label>Attempted</label><input name="attempted" type="number" min="0" required></div>
-<div class="field"><label>Correct</label><input name="correct" type="number" min="0" required></div>
-<div class="field"><label>Wrong</label><input name="wrong" type="number" min="0"></div>
-<div class="field"><label>Time (minutes)</label><input name="time" type="number" min="0"></div>
-<div class="field"><label>Main problem</label><textarea name="mainProblem"></textarea></div>
-<div class="field"><label>What did I know but still get wrong?</label><textarea name="knownWrong"></textarea></div>
-<div class="field"><label>What concept did I not know?</label><textarea name="unknown"></textarea></div>
-<div class="field"><label>Which questions took too much time?</label><textarea name="slow"></textarea></div>
-<div class="field"><label>Which should I have skipped?</label><textarea name="skip"></textarea></div>
+<div class="field">
+<label>Date</label>
+<input name="date" type="date" value="${today()}" required>
+</div>
+
+<div class="field">
+<label>Test name</label>
+<input name="test" required>
+</div>
+
+<div class="field">
+<label>Subject</label>
+<input name="subject" required>
+</div>
+
+<div class="field">
+<label>Attempted</label>
+<input name="attempted" type="number" min="0" required>
+</div>
+
+<div class="field">
+<label>Correct</label>
+<input name="correct" type="number" min="0" required>
+</div>
+
+<div class="field">
+<label>Wrong</label>
+<input name="wrong" type="number" min="0">
+</div>
+
+<div class="field">
+<label>Time (minutes)</label>
+<input name="time" type="number" min="0">
+</div>
+
+<div class="field">
+<label>Main problem</label>
+<textarea name="mainProblem"></textarea>
+</div>
+
+<div class="field">
+<label>What did I know but still get wrong?</label>
+<textarea name="knownWrong"></textarea>
+</div>
+
+<div class="field">
+<label>What concept did I not know?</label>
+<textarea name="unknown"></textarea>
+</div>
+
+<div class="field">
+<label>Which questions took too much time?</label>
+<textarea name="slow"></textarea>
+</div>
+
+<div class="field">
+<label>Which should I have skipped?</label>
+<textarea name="skip"></textarea>
+</div>
+`;
+
+}else if(kind==="practice"){
+
+$("formTitle").textContent="Daily Practice";
+
+f=`
+<div class="field">
+<label>Choose Subject</label>
+<select name="subject" required>
+${SUBJECTS.map(s=>`<option>${esc(s)}</option>`).join("")}
+</select>
+</div>
+
+<div class="field">
+<label>Topic</label>
+<input name="topic" required>
+</div>
+
+<div class="field">
+<label>Questions attempted</label>
+<input name="attempted" type="number" min="1" required>
+</div>
+
+<div class="field">
+<label>Correct</label>
+<input name="correct" type="number" min="0" required>
+</div>
+
+<div class="field">
+<label>Time in minutes</label>
+<input name="time" type="number" min="0">
+</div>
 `;
 
 }
 
-$("entryForm").innerHTML=f+`<button class="submit">Save</button>`;
+$("entryForm").innerHTML=
+f+`<button class="submit">Save</button>`;
 
 $("entryForm").onsubmit=e=>{
 e.preventDefault();
 
-let o=Object.fromEntries(new FormData(e.target).entries());
+const o=Object.fromEntries(
+new FormData(e.target).entries()
+);
 
 if(kind==="mistake"){
 
-let base=new Date(o.date+"T00:00:00");
+const base=new Date(o.date+"T00:00:00");
 
 o.revisions=[1,3,7,15,30].map(n=>{
-let d=new Date(base);
+const d=new Date(base);
 d.setDate(d.getDate()+n);
 return d.toISOString().slice(0,10);
 });
 
 data.mistakes.push(o);
 
-}else{
+}else if(kind==="test"){
 
-if(!o.wrong)o.wrong=Math.max(0,+o.attempted-(+o.correct));
+const attempted=Number(o.attempted||0);
+const correct=Math.min(
+Number(o.correct||0),
+attempted
+);
+
+if(!o.wrong){
+o.wrong=Math.max(0,attempted-correct);
+}
 
 data.tests.push(o);
 
+}else if(kind==="practice"){
+
+const attempted=Number(o.attempted||0);
+const correct=Math.min(
+Number(o.correct||0),
+attempted
+);
+
+const wrong=Math.max(0,attempted-correct);
+
+data.practice.push({
+date:today(),
+subject:o.subject,
+topic:o.topic,
+attempted,
+correct,
+wrong,
+time:Number(o.time||0)
+});
+
 }
 
-data.activity[o.date]=true;
+data.activity[o.date||today()]=true;
 
 save();
 closeForm();
@@ -578,16 +766,31 @@ $("modal").hidden=true;
 function renderMistakes(){
 
 $("mistakeList").innerHTML=data.mistakes.length?
-data.mistakes.slice().reverse().map((x,i)=>`
+data.mistakes.slice().reverse().map(x=>`
 <div class="entry">
-<div class="entryTitle">${esc(x.subject)} • ${esc(x.topic)}</div>
-<div class="meta">${esc(x.date)} • Q${esc(x.qno||"-")}</div>
+
+<div class="entryTitle">
+${esc(x.subject)} • ${esc(x.topic)}
+</div>
+
+<div class="meta">
+${esc(x.date)} • Q${esc(x.qno||"-")}
+</div>
+
 <span class="pill">Mistake</span>
+
 <p>${esc(x.mistake)}</p>
+
+${x.correctMethod?
+`<div class="meta">
+Correct method: ${esc(x.correctMethod)}
+</div>`:""}
+
 <div class="meta">
 Reason: ${esc(x.reason||"-")} •
 Improve: ${esc(x.revisit||"-")}
 </div>
+
 </div>
 `).join(""):
 `<div class="card empty">No mistakes recorded yet.</div>`;
@@ -596,8 +799,13 @@ Improve: ${esc(x.revisit||"-")}
 
 function renderTests(){
 
-let attempted=data.tests.reduce((a,x)=>a+(+x.attempted||0),0);
-let correct=data.tests.reduce((a,x)=>a+(+x.correct||0),0);
+const attempted=data.tests.reduce(
+(a,x)=>a+Number(x.attempted||0),0
+);
+
+const correct=data.tests.reduce(
+(a,x)=>a+Number(x.correct||0),0
+);
 
 $("dashTests").textContent=data.tests.length;
 
@@ -607,12 +815,48 @@ Math.round(correct/attempted*100)+"%":"0%";
 $("testList").innerHTML=data.tests.length?
 data.tests.slice().reverse().map(x=>`
 <div class="entry">
+
 <div class="entryTitle">${esc(x.test)}</div>
-<div class="meta">${esc(x.date)} • ${esc(x.subject)}</div>
-<span class="pill">Attempted ${x.attempted}</span>
-<span class="pill">Correct ${x.correct}</span>
-<span class="pill">Wrong ${x.wrong}</span>
-${x.mainProblem?`<p>${esc(x.mainProblem)}</p>`:""}
+
+<div class="meta">
+${esc(x.date)} • ${esc(x.subject)}
+</div>
+
+<span class="pill">
+Attempted ${x.attempted}
+</span>
+
+<span class="pill">
+Correct ${x.correct}
+</span>
+
+<span class="pill">
+Wrong ${x.wrong}
+</span>
+
+${x.mainProblem?
+`<p>${esc(x.mainProblem)}</p>`:""}
+
+${x.knownWrong?
+`<div class="meta">
+Known but wrong: ${esc(x.knownWrong)}
+</div>`:""}
+
+${x.unknown?
+`<div class="meta">
+Unknown concept: ${esc(x.unknown)}
+</div>`:""}
+
+${x.slow?
+`<div class="meta">
+Too slow: ${esc(x.slow)}
+</div>`:""}
+
+${x.skip?
+`<div class="meta">
+Should skip: ${esc(x.skip)}
+</div>`:""}
+
 </div>
 `).join(""):
 `<div class="card empty">No tests recorded yet.</div>`;
@@ -621,32 +865,47 @@ ${x.mainProblem?`<p>${esc(x.mainProblem)}</p>`:""}
 
 function renderProgress(){
 
-let total=data.topics.length;
+const total=data.topics.length;
 
-let completed=data.topics.filter(t=>
-t.status==="Completed"||t.status==="Exam Ready"
+const completed=data.topics.filter(t=>
+t.status==="Completed"||
+t.status==="Exam Ready"
 ).length;
 
-let overall=total?Math.round(completed/total*100):0;
+const overall=total?
+Math.round(completed/total*100):0;
 
 $("overallProgressBar").style.width=overall+"%";
-$("overallProgressText").textContent=overall+"% exam preparation";
+$("overallProgressText").textContent=
+overall+"% exam preparation";
 
 let html="";
 
 SUBJECTS.forEach(s=>{
 
-let arr=data.topics.filter(t=>t.subject===s);
+const arr=data.topics.filter(t=>t.subject===s);
 
-let done=arr.filter(t=>t.status==="Completed"||t.status==="Exam Ready").length;
+const done=arr.filter(t=>
+t.status==="Completed"||
+t.status==="Exam Ready"
+).length;
 
-let pct=arr.length?Math.round(done/arr.length*100):0;
+const pct=arr.length?
+Math.round(done/arr.length*100):0;
 
 html+=`
 <div class="entry">
+
 <b>${esc(s)}</b>
-<div class="meta">${done}/${arr.length} topics ready • ${pct}%</div>
-<div class="topicProgress"><i style="width:${pct}%"></i></div>
+
+<div class="meta">
+${done}/${arr.length} topics ready • ${pct}%
+</div>
+
+<div class="topicProgress">
+<i style="width:${pct}%"></i>
+</div>
+
 </div>
 `;
 
@@ -654,102 +913,270 @@ html+=`
 
 $("subjectProgress").innerHTML=html;
 
-let weak=data.topics.filter(t=>{
-return t.practice>=10&&t.correct/t.practice<0.7;
-}).slice(0,8);
 
-$("areas").innerHTML=weak.length?
-weak.map(t=>`
+/* STRONG / WEAK AREAS */
+
+const weak=data.topics.filter(t=>
+t.practice>=10 &&
+t.correct/t.practice<0.70
+).slice(0,8);
+
+const strong=data.topics.filter(t=>
+t.practice>=10 &&
+t.correct/t.practice>=0.85
+).slice(0,8);
+
+let areasHTML="";
+
+if(strong.length){
+
+areasHTML+=`
+<h4>💪 Strong Areas</h4>
+`;
+
+areasHTML+=strong.map(t=>`
 <div class="entry">
+
 <b>${esc(t.topic)}</b>
-<div class="meta">${esc(t.subject)} • Accuracy ${Math.round(t.correct/t.practice*100)}%</div>
+
+<div class="meta">
+${esc(t.subject)} •
+Accuracy ${Math.round(t.correct/t.practice*100)}%
 </div>
-`).join(""):
-`<div class="empty">No major weak topics identified yet.</div>`;
 
-let improvements=[];
-
-data.topics.filter(t=>t.practice>0).forEach(t=>{
-let acc=t.correct/t.practice*100;
-
-if(acc<70)
-improvements.push(`${t.topic}: improve accuracy`);
-
-if(t.time>0&&t.practice>=10&&t.time/t.practice>1.5)
-improvements.push(`${t.topic}: improve speed`);
-});
-
-$("improvementList").innerHTML=improvements.length?
-improvements.slice(0,10).map(x=>`<div class="entry">${esc(x)}</div>`).join(""):
-`No improvement alerts yet. Keep practicing. 💪`;
+</div>
+`).join("");
 
 }
 
+if(weak.length){
+
+areasHTML+=`
+<h4>⚠️ Weak Areas</h4>
+`;
+
+areasHTML+=weak.map(t=>`
+<div class="entry">
+
+<b>${esc(t.topic)}</b>
+
+<div class="meta">
+${esc(t.subject)} •
+Accuracy ${Math.round(t.correct/t.practice*100)}%
+</div>
+
+</div>
+`).join("");
+
+}
+
+$("areas").innerHTML=areasHTML||
+`<div class="empty">
+Practice at least 10 questions in a topic to identify strong and weak areas.
+</div>`;
+
+
+/* WHAT TO IMPROVE */
+
+let improvements=[];
+
+data.topics
+.filter(t=>t.practice>0)
+.forEach(t=>{
+
+const accuracy=
+t.correct/t.practice*100;
+
+if(accuracy<70){
+
+improvements.push({
+topic:t.topic,
+subject:t.subject,
+text:"Improve accuracy",
+priority:1
+});
+
+}
+
+if(
+t.practice>=10 &&
+t.time>0 &&
+t.time/t.practice>1.5
+){
+
+improvements.push({
+topic:t.topic,
+subject:t.subject,
+text:"Improve speed",
+priority:2
+});
+
+}
+
+});
+
+improvements.sort((a,b)=>a.priority-b.priority);
+
+$("improvementList").innerHTML=
+improvements.length?
+
+improvements
+.slice(0,10)
+.map(x=>`
+<div class="entry">
+
+<b>${esc(x.topic)}</b>
+
+<div class="meta">
+${esc(x.subject)}
+</div>
+
+<div class="meta">
+💡 ${esc(x.text)}
+</div>
+
+</div>
+`)
+.join(""):
+
+`<div class="empty">
+No improvement alerts yet. Keep practicing. 💪
+</div>`;
+
+}
+
+
+/* DASHBOARD */
+
 function renderDashboard(){
 
-let attempted=data.practice.reduce((a,x)=>a+(+x.attempted||0),0);
-let correct=data.practice.reduce((a,x)=>a+(+x.correct||0),0);
+const attempted=data.practice.reduce(
+(a,x)=>a+Number(x.attempted||0),0
+);
 
-$("dashAccuracy").textContent=attempted?
-Math.round(correct/attempted*100)+"%":"0%";
+const correct=data.practice.reduce(
+(a,x)=>a+Number(x.correct||0),0
+);
 
-$("dashMistakes").textContent=data.mistakes.length;
-
-let completed=data.topics.filter(t=>
-t.status==="Completed"||t.status==="Exam Ready"
+const completed=data.topics.filter(t=>
+t.status==="Completed"||
+t.status==="Exam Ready"
 ).length;
 
-$("dashCompleted").textContent=completed+"/"+data.topics.length;
-
-let overall=data.topics.length?
-Math.round(completed/data.topics.length*100):0;
+const overall=data.topics.length?
+Math.round(
+completed/data.topics.length*100
+):0;
 
 $("dashProgress").textContent=overall+"%";
+
+$("dashCompleted").textContent=completed;
+
+$("dashAccuracy").textContent=
+attempted?
+Math.round(correct/attempted*100)+"%":
+"0%";
+
 
 let due=0;
 
 data.mistakes.forEach(x=>{
-if((x.revisions||[]).includes(today())) due++;
+
+if(
+(x.revisions||[]).includes(today())
+){
+
+due++;
+
+}
+
 });
 
 data.topics.forEach(t=>{
-if((t.revisions||[]).some(r=>r.date<=today()&&!r.done)) due++;
+
+if(
+(t.revisions||[]).some(
+r=>r.date<=today()&&!r.done
+)
+){
+
+due++;
+
+}
+
 });
 
 $("dashRevisions").textContent=due;
 
 $("todayList").innerHTML=due?
-`You have <b>${due}</b> revision(s) due today. Open Revision to start. 🔄`:
+
+`You have <b>${due}</b> revision(s) due today.
+Open Revision to start. 🔄`:
+
 `Nothing due today 🎯`;
 
-let weak=data.topics.filter(t=>
-t.practice>=10&&t.correct/t.practice<0.7
+
+const weak=data.topics.filter(t=>
+t.practice>=10 &&
+t.correct/t.practice<0.70
 ).slice(0,5);
 
-$("homeWeakAreas").innerHTML=weak.length?
+$("homeWeakAreas").innerHTML=
+weak.length?
+
 weak.map(t=>`
 <div class="entry">
+
 <b>${esc(t.topic)}</b>
-<div class="meta">${esc(t.subject)} • ${Math.round(t.correct/t.practice*100)}% accuracy</div>
+
+<div class="meta">
+${esc(t.subject)} •
+${Math.round(t.correct/t.practice*100)}% accuracy
+</div>
+
 </div>
 `).join(""):
-`No major weak areas yet. Keep practicing! 🔥`;
+
+`No major weak areas yet.
+Keep practicing! 🔥`;
+
 }
+
+
+/* STREAK */
 
 function renderStreak(){
 
 let streak=0;
-let d=new Date();
 
-while(data.activity[d.toISOString().slice(0,10)]){
+const d=new Date();
+
+while(
+data.activity[
+d.toISOString().slice(0,10)
+]
+){
+
 streak++;
-d.setDate(d.getDate()-1);
+
+d.setDate(
+d.getDate()-1
+);
+
 if(streak>365)break;
+
 }
 
-$("streakText").textContent=`${streak} day streak`;
-$("streakBar").style.width=Math.min(streak/30*100,100)+"%";
+$("streakText").textContent=
+`${streak} day streak`;
+
+$("streakBar").style.width=
+Math.min(streak/30*100,100)+"%";
+
 }
+
+
+/* RENDER EVERYTHING */
 
 function render(){
 
@@ -764,38 +1191,92 @@ renderStreak();
 
 }
 
+
+/* NAVIGATION */
+
 document.querySelectorAll(".navBtn").forEach(b=>{
+
 b.onclick=()=>{
-document.querySelectorAll(".navBtn").forEach(x=>x.classList.remove("active"));
+
+document
+.querySelectorAll(".navBtn")
+.forEach(x=>x.classList.remove("active"));
+
 b.classList.add("active");
 
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document
+.querySelectorAll(".screen")
+.forEach(s=>s.classList.remove("active"));
 
 $(b.dataset.screen).classList.add("active");
+
 };
+
 });
 
-$("topicSubjectFilter")?.addEventListener("change",renderTopics);
-$("topicLevelFilter")?.addEventListener("change",renderTopics);
-$("topicStatusFilter")?.addEventListener("change",renderTopics);
+
+/* TOPIC FILTERS */
+
+$("topicSubjectFilter")
+?.addEventListener(
+"change",
+renderTopics
+);
+
+$("topicLevelFilter")
+?.addEventListener(
+"change",
+renderTopics
+);
+
+$("topicStatusFilter")
+?.addEventListener(
+"change",
+renderTopics
+);
+
+
+/* INSTALL */
 
 let deferred;
 
-window.addEventListener("beforeinstallprompt",e=>{
+window.addEventListener(
+"beforeinstallprompt",
+e=>{
+
 e.preventDefault();
+
 deferred=e;
+
 $("installBtn").hidden=false;
-});
+
+}
+);
 
 $("installBtn").onclick=async()=>{
+
 if(deferred){
+
 deferred.prompt();
+
 deferred=null;
+
 }
+
 };
 
+
+/* SERVICE WORKER */
+
 if("serviceWorker" in navigator){
-navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+navigator.serviceWorker
+.register("sw.js")
+.catch(()=>{});
+
 }
+
+
+/* START APP */
 
 render();
