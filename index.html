@@ -4,56 +4,317 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17121f">
+<meta name="description" content="DON'T STOP - Banking Exam Preparation Tracker">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="style.css">
 <title>DON'T STOP</title>
 </head>
+
 <body>
-<header class="top"><div><div class="brand">DON'T STOP</div><div class="tag">Track • Analyze • Revise • Improve</div></div><button id="installBtn" hidden>Install</button></header>
+
+<header class="top">
+  <div>
+    <div class="brand">DON'T STOP</div>
+    <div class="tag">Track • Practice • Revise • Improve • Crack</div>
+  </div>
+  <button id="installBtn" hidden>Install</button>
+</header>
 
 <main>
+
+<!-- HOME -->
 <section id="dashboard" class="screen active">
-  <div class="hero"><h1>Keep going. 🔥</h1><p>Your preparation, organized in one place.</p></div>
-  <div class="grid">
-    <div class="card"><span>Accuracy</span><b id="dashAccuracy">0%</b></div>
-    <div class="card"><span>Mistakes</span><b id="dashMistakes">0</b></div>
-    <div class="card"><span>Tests</span><b id="dashTests">0</b></div>
-    <div class="card"><span>Revisions due</span><b id="dashRevisions">0</b></div>
+  <div class="hero">
+    <h1>Keep going. 🔥</h1>
+    <p>Your complete banking exam preparation tracker.</p>
   </div>
-  <div class="card"><h3>Today</h3><div id="todayList" class="empty">Nothing due today 🎯</div></div>
+
+  <div class="grid">
+    <div class="card">
+      <span>Overall Progress</span>
+      <b id="dashProgress">0%</b>
+    </div>
+    <div class="card">
+      <span>Topics Ready</span>
+      <b id="dashCompleted">0</b>
+    </div>
+    <div class="card">
+      <span>Practice Accuracy</span>
+      <b id="dashAccuracy">0%</b>
+    </div>
+    <div class="card">
+      <span>Revisions Due</span>
+      <b id="dashRevisions">0</b>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Today's Focus 🎯</h3>
+    <div id="todayList" class="empty">Nothing due today.</div>
+  </div>
+
+  <div class="card">
+    <h3>Weak Areas ⚠️</h3>
+    <div id="homeWeakAreas" class="empty">Complete some practice to identify weak areas.</div>
+  </div>
 </section>
 
+
+<!-- TOPICS -->
+<section id="topics" class="screen">
+
+  <div class="sectionHead">
+    <div>
+      <h2>📚 Topics</h2>
+      <p>Complete your banking syllabus step by step.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="filterLabel">Subject</label>
+    <select id="topicSubjectFilter">
+      <option value="All">All Subjects</option>
+      <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+      <option value="Reasoning Ability">Reasoning Ability</option>
+      <option value="English Language">English Language</option>
+      <option value="General Awareness">General Awareness</option>
+      <option value="Banking & Financial Awareness">Banking & Financial Awareness</option>
+    </select>
+
+    <label class="filterLabel">Level</label>
+    <select id="topicLevelFilter">
+      <option value="All">All Levels</option>
+      <option value="Level 1">Level 1 - Foundation</option>
+      <option value="Level 2">Level 2 - Standard</option>
+      <option value="Level 3">Level 3 - Advanced</option>
+      <option value="Level 4">Level 4 - Exam Ready</option>
+    </select>
+
+    <label class="filterLabel">Status</label>
+    <select id="topicStatusFilter">
+      <option value="All">All Status</option>
+      <option value="Not Started">Not Started</option>
+      <option value="Learning">Learning</option>
+      <option value="Practicing">Practicing</option>
+      <option value="Completed">Completed</option>
+      <option value="Exam Ready">Exam Ready</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>Syllabus Progress</h3>
+    <div class="progressBar">
+      <i id="topicProgressBar"></i>
+    </div>
+    <p id="topicProgressText">0% completed</p>
+  </div>
+
+  <div id="topicList"></div>
+
+</section>
+
+
+<!-- PRACTICE -->
+<section id="practice" class="screen">
+
+  <div class="sectionHead">
+    <div>
+      <h2>📝 Practice</h2>
+      <p>Track your daily question practice.</p>
+    </div>
+    <button class="primary" onclick="openForm('practice')">+ Add</button>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <span>Questions</span>
+      <b id="practiceQuestions">0</b>
+    </div>
+    <div class="card">
+      <span>Accuracy</span>
+      <b id="practiceAccuracy">0%</b>
+    </div>
+  </div>
+
+  <div id="practiceList"></div>
+
+</section>
+
+
+<!-- REVISION -->
+<section id="revision" class="screen">
+
+  <div class="sectionHead">
+    <div>
+      <h2>🔄 Revision</h2>
+      <p>Never forget what you have learned.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Today's Revisions</h3>
+    <div id="revisionToday" class="empty">No revisions due today.</div>
+  </div>
+
+  <div class="card">
+    <h3>Revision System</h3>
+    <p>Every completed topic can follow:</p>
+    <div class="pill">Day 1</div>
+    <div class="pill">Day 3</div>
+    <div class="pill">Day 7</div>
+    <div class="pill">Day 15</div>
+    <div class="pill">Day 30</div>
+  </div>
+
+  <div id="revisionList"></div>
+
+</section>
+
+
+<!-- MISTAKES -->
 <section id="mistakes" class="screen">
-  <div class="sectionHead"><div><h2>Mistake Tracker</h2><p>Record once, learn from it.</p></div><button class="primary" onclick="openForm('mistake')">+ Add</button></div>
+
+  <div class="sectionHead">
+    <div>
+      <h2>❌ Mistake Tracker</h2>
+      <p>Record mistakes and eliminate them permanently.</p>
+    </div>
+    <button class="primary" onclick="openForm('mistake')">+ Add</button>
+  </div>
+
   <div id="mistakeList"></div>
+
 </section>
 
+
+<!-- TESTS -->
 <section id="tests" class="screen">
-  <div class="sectionHead"><div><h2>Test Analysis</h2><p>Find what is costing you marks and time.</p></div><button class="primary" onclick="openForm('test')">+ Add</button></div>
+
+  <div class="sectionHead">
+    <div>
+      <h2>🧪 Test Analysis</h2>
+      <p>Analyse every sectional and full-length test.</p>
+    </div>
+    <button class="primary" onclick="openForm('test')">+ Add</button>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <span>Total Tests</span>
+      <b id="dashTests">0</b>
+    </div>
+    <div class="card">
+      <span>Average Accuracy</span>
+      <b id="testAccuracy">0%</b>
+    </div>
+  </div>
+
   <div id="testList"></div>
+
 </section>
 
+
+<!-- PROGRESS -->
 <section id="progress" class="screen">
-  <div class="sectionHead"><div><h2>Progress</h2><p>See your preparation improve.</p></div></div>
-  <div class="card"><h3>Strong / Weak Areas</h3><div id="areas"></div></div>
-  <div class="card"><h3>Consistency</h3><div class="progressBar"><i id="streakBar"></i></div><p id="streakText">0 day streak</p></div>
-  <div class="card"><h3>Revision schedule</h3><p>Each mistake automatically creates Day 1, 3, 7, 15 and 30 revision dates.</p></div>
+
+  <div class="sectionHead">
+    <div>
+      <h2>📊 Progress</h2>
+      <p>Know exactly where you stand.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Overall Preparation</h3>
+    <div class="progressBar">
+      <i id="overallProgressBar"></i>
+    </div>
+    <p id="overallProgressText">0%</p>
+  </div>
+
+  <div class="card">
+    <h3>Subject Progress</h3>
+    <div id="subjectProgress"></div>
+  </div>
+
+  <div class="card">
+    <h3>Strong / Weak Areas</h3>
+    <div id="areas"></div>
+  </div>
+
+  <div class="card">
+    <h3>What to Improve 💡</h3>
+    <div id="improvementList" class="empty">
+      Complete practice and tests to receive improvement points.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Consistency 🔥</h3>
+    <div class="progressBar">
+      <i id="streakBar"></i>
+    </div>
+    <p id="streakText">0 day streak</p>
+  </div>
+
 </section>
+
 </main>
 
+
+<!-- NAVIGATION -->
 <nav class="nav">
-<button class="navBtn active" data-screen="dashboard">⌂<small>Home</small></button>
-<button class="navBtn" data-screen="mistakes">✎<small>Mistakes</small></button>
-<button class="navBtn" data-screen="tests">▣<small>Tests</small></button>
-<button class="navBtn" data-screen="progress">↗<small>Progress</small></button>
+
+<button class="navBtn active" data-screen="dashboard">
+  ⌂
+  <small>Home</small>
+</button>
+
+<button class="navBtn" data-screen="topics">
+  📚
+  <small>Topics</small>
+</button>
+
+<button class="navBtn" data-screen="practice">
+  ✎
+  <small>Practice</small>
+</button>
+
+<button class="navBtn" data-screen="revision">
+  🔄
+  <small>Revision</small>
+</button>
+
+<button class="navBtn" data-screen="tests">
+  ▣
+  <small>Tests</small>
+</button>
+
+<button class="navBtn" data-screen="progress">
+  ↗
+  <small>Progress</small>
+</button>
+
 </nav>
 
+
+<!-- FORM MODAL -->
 <div id="modal" class="modal" hidden>
-<div class="modalBox">
-<button class="close" onclick="closeForm()">×</button>
-<h2 id="formTitle"></h2>
-<form id="entryForm"></form>
-</div></div>
+
+  <div class="modalBox">
+
+    <button class="close" onclick="closeForm()">×</button>
+
+    <h2 id="formTitle"></h2>
+
+    <form id="entryForm"></form>
+
+  </div>
+
+</div>
+
+
 <script src="app.js"></script>
+
 </body>
-</html>
+        </html>
